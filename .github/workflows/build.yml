@@ -13,10 +13,17 @@ jobs:
           mkdir sdk
           tar -xzf sdk.tar.gz -C sdk --strip-components=1
           echo "PLAYDATE_SDK_PATH=$PWD/sdk" >> $GITHUB_ENV
+      - name: Unzip game
+        run: |
+          mkdir -p unzipped
+          for z in *.zip; do [ -f "$z" ] && unzip -o "$z" -d unzipped; done
+          MAIN=$(find unzipped source -name main.lua 2>/dev/null | head -n 1)
+          if [ -z "$MAIN" ]; then echo "No main.lua found. Upload your game zip to the repo."; exit 1; fi
+          echo "SRC=$(dirname "$MAIN")" >> $GITHUB_ENV
       - name: Build
         run: |
           mkdir out
-          $PLAYDATE_SDK_PATH/bin/pdc source out/Game.pdx
+          $PLAYDATE_SDK_PATH/bin/pdc "$SRC" out/Game.pdx
       - uses: actions/upload-artifact@v4
         with:
           name: Game

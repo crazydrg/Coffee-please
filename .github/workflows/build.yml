@@ -19,12 +19,20 @@ jobs:
           for z in *.zip; do [ -f "$z" ] && unzip -o "$z" -d unzipped; done
           MAIN=$(find unzipped source -name main.lua 2>/dev/null | head -n 1)
           if [ -z "$MAIN" ]; then echo "No main.lua found. Upload your game zip to the repo."; exit 1; fi
-          echo "SRC=$(dirname "$MAIN")" >> $GITHUB_ENV
+          SRC=$(dirname "$MAIN")
+          NAME=$(basename "$SRC")
+          if [ "$NAME" = "source" ] || [ "$NAME" = "Source" ]; then NAME=$(basename "$(dirname "$SRC")"); fi
+          if [ "$NAME" = "unzipped" ] || [ "$NAME" = "." ]; then
+            NAME=$(ls *.zip 2>/dev/null | head -n 1 | sed 's/\.zip$//')
+          fi
+          [ -z "$NAME" ] && NAME=Game
+          echo "SRC=$SRC" >> $GITHUB_ENV
+          echo "GAME_NAME=$NAME" >> $GITHUB_ENV
       - name: Build
         run: |
           mkdir out
-          $PLAYDATE_SDK_PATH/bin/pdc "$SRC" out/Game.pdx
+          $PLAYDATE_SDK_PATH/bin/pdc "$SRC" "out/$GAME_NAME.pdx"
       - uses: actions/upload-artifact@v4
         with:
-          name: Game
+          name: ${{ env.GAME_NAME }}
           path: out

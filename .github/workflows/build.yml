@@ -1,0 +1,23 @@
+name: Build Playdate game
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Playdate SDK
+        run: |
+          curl -L -o sdk.tar.gz https://download.panic.com/playdate_sdk/Linux/PlaydateSDK-latest.tar.gz
+          mkdir sdk
+          tar -xzf sdk.tar.gz -C sdk --strip-components=1
+          echo "PLAYDATE_SDK_PATH=$PWD/sdk" >> $GITHUB_ENV
+      - name: Build
+        run: |
+          mkdir out
+          $PLAYDATE_SDK_PATH/bin/pdc source out/Game.pdx
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Game
+          path: out
